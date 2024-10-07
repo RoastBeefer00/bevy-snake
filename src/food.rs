@@ -55,12 +55,14 @@ fn handle_food_eaten(
     food: Query<(Entity, &Transform), With<Food>>,
     head: Query<&Transform, With<SnakeHead>>,
     mut food_writer: EventWriter<FoodEaten>,
+    mut grow_writer: EventWriter<SnakeGrow>,
 ) {
     if let Some(head_transform) = head.iter().next() {
         for (entity, food_transform) in food.iter() {
             if head_transform.translation == food_transform.translation {
                 commands.entity(entity).despawn_recursive();
                 food_writer.send(FoodEaten);
+                grow_writer.send(SnakeGrow);
             }
         }
     }
@@ -70,10 +72,8 @@ fn eat_food(
     commands: Commands,
     transforms: Query<&Transform>,
     mut food_reader: EventReader<FoodEaten>,
-    mut grow_writer: EventWriter<SnakeGrow>,
 ) {
     if food_reader.read().next().is_some() {
         spawn_food(commands, transforms);
-        grow_writer.send(SnakeGrow);
     }
 }

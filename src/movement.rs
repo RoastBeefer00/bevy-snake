@@ -30,7 +30,7 @@ pub struct MovementPlugin;
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(MovementTimer {
-            timer: Timer::from_seconds(0.3, TimerMode::Repeating),
+            timer: Timer::from_seconds(0.1, TimerMode::Repeating),
         });
         app.add_systems(Update, move_snake);
     }
