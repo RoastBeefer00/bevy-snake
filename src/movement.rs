@@ -38,23 +38,23 @@ impl Plugin for MovementPlugin {
 
 fn move_snake(
     mut head: Query<(&mut Direction, &mut Transform), With<SnakeHead>>,
-    body: ResMut<SnakeBody>,
+    mut body: ResMut<SnakeBody>,
     mut segments: Query<(&mut Direction, &mut Transform), Without<SnakeHead>>,
     mut timer: ResMut<MovementTimer>,
     input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
     if let Some((mut head_direction, _)) = head.iter_mut().next() {
-        if input.pressed(KeyCode::ArrowUp) && head_direction.opposite() != Direction::Up {
+        if input.pressed(KeyCode::ArrowUp) && body.head_direction != Direction::Down {
             *head_direction = Direction::Up;
         }
-        if input.pressed(KeyCode::ArrowDown) && head_direction.opposite() != Direction::Down {
+        if input.pressed(KeyCode::ArrowDown) && body.head_direction != Direction::Up {
             *head_direction = Direction::Down;
         }
-        if input.pressed(KeyCode::ArrowLeft) && head_direction.opposite() != Direction::Left {
+        if input.pressed(KeyCode::ArrowLeft) && body.head_direction != Direction::Right {
             *head_direction = Direction::Left;
         }
-        if input.pressed(KeyCode::ArrowRight) && head_direction.opposite() != Direction::Right {
+        if input.pressed(KeyCode::ArrowRight) && body.head_direction != Direction::Left {
             *head_direction = Direction::Right;
         }
     };
@@ -72,10 +72,9 @@ fn move_snake(
             .collect::<Vec<Direction>>();
 
         segment_directions.insert(0, *head_direction);
-        info!("Head direction: {:?}", *head_direction);
-        info!("Segment directions: {:?}", segment_directions);
 
         // Move the head
+        info!("Head position: {:?}", head_transform.translation);
         match *head_direction {
             Direction::Up => {
                 if head_transform.translation.y >= 9.0 {
@@ -83,6 +82,7 @@ fn move_snake(
                 } else {
                     head_transform.translation.y += 1.0
                 }
+                body.head_direction = *head_direction
             }
             Direction::Down => {
                 if head_transform.translation.y <= -9.0 {
@@ -90,6 +90,7 @@ fn move_snake(
                 } else {
                     head_transform.translation.y += -1.0
                 }
+                body.head_direction = *head_direction
             }
             Direction::Left => {
                 if head_transform.translation.x <= -9.0 {
@@ -97,6 +98,7 @@ fn move_snake(
                 } else {
                     head_transform.translation.x += -1.0
                 }
+                body.head_direction = *head_direction
             }
             Direction::Right => {
                 if head_transform.translation.x >= 9.0 {
@@ -104,10 +106,12 @@ fn move_snake(
                 } else {
                     head_transform.translation.x += 1.0
                 }
+                body.head_direction = *head_direction
             }
         }
         // Move the body
         for (direction, mut transform) in segments.iter_mut() {
+            info!("Segment position: {:?}", transform.translation);
             match *direction {
                 Direction::Up => {
                     if transform.translation.y >= 9.0 {
@@ -142,18 +146,7 @@ fn move_snake(
 
         // Update segment directions
         body.entities.iter().enumerate().for_each(|(i, entity)| {
-            info!(i);
-            info!("{:?}", &segment_directions[i]);
             *segments.get_mut(*entity).unwrap().0 = segment_directions[i];
         });
     }
-    // for (direction, mut transform) in query.iter_mut() {
-    //     // transform.translation += direction.velocity().value.extend(0.0) * time.delta_seconds();
-    //     match direction {
-    //         Direction::Up => transform.translation.y += 1.0,
-    //         Direction::Down => transform.translation.y += -1.0,
-    //         Direction::Left => transform.translation.x += -1.0,
-    //         Direction::Right => transform.translation.x += 1.0,
-    //     }
-    // }
 }

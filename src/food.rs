@@ -14,7 +14,7 @@ impl Plugin for FoodPlugin {
 }
 
 #[derive(Component)]
-struct Food;
+pub struct Food;
 
 #[derive(Event)]
 struct FoodEaten;

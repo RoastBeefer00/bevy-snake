@@ -1,12 +1,16 @@
 use bevy::prelude::*;
 
+use crate::food::Food;
 use crate::movement::Direction;
 
 pub struct SnakePlugin;
 
 impl Plugin for SnakePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SnakeBody { entities: vec![] });
+        app.insert_resource(SnakeBody {
+            head_direction: Direction::Right,
+            entities: vec![],
+        });
         app.add_systems(Startup, spawn_snake);
         app.add_event::<SnakeGrow>();
         app.add_systems(Update, grow_snake);
@@ -16,6 +20,9 @@ impl Plugin for SnakePlugin {
 
 #[derive(Component)]
 pub struct SnakeHead;
+
+#[derive(Component)]
+pub struct SnakeTail;
 
 #[derive(Bundle)]
 pub struct SnakeSegment {
@@ -42,6 +49,7 @@ impl SnakeSegment {
 
 #[derive(Resource)]
 pub struct SnakeBody {
+    pub head_direction: Direction,
     pub entities: Vec<Entity>,
 }
 
@@ -53,10 +61,11 @@ fn spawn_snake(mut commands: Commands, mut body: ResMut<SnakeBody>) {
         SnakeSegment::new(Direction::Right, Transform::from_xyz(0.0, 0.0, 0.0)),
         SnakeHead,
     ));
+    body.head_direction = Direction::Right;
     body.entities = vec![commands
-        .spawn(SnakeSegment::new(
-            Direction::Right,
-            Transform::from_xyz(-1.0, 0.0, 0.0),
+        .spawn((
+            SnakeSegment::new(Direction::Right, Transform::from_xyz(-1.0, 0.0, 0.0)),
+            SnakeTail,
         ))
         .id()];
 }
@@ -94,7 +103,7 @@ fn grow_snake(
         };
         body.entities.push(
             commands
-                .spawn(SnakeSegment::new(*last_segment.0, placement))
+                .spawn((SnakeSegment::new(*last_segment.0, placement), SnakeTail))
                 .id(),
         )
     }
@@ -104,11 +113,15 @@ fn handle_snake_collision(
     mut commands: Commands,
     body: ResMut<SnakeBody>,
     mut head: Query<(Entity, &Transform), With<SnakeHead>>,
-    segments: Query<&Transform, Without<SnakeHead>>,
+    segments: Query<&Transform, (Without<SnakeHead>, With<SnakeTail>)>,
 ) {
     if let Some((head_entity, head_transform)) = head.iter_mut().next() {
         for segment_transform in segments.iter() {
             if head_transform.translation == segment_transform.translation {
+                error!(
+                    "Head at pos {:?} collided with tail at pos {:?}",
+                    head_transform.translation, segment_transform.translation
+                );
                 commands.entity(head_entity).despawn_recursive();
                 body.entities
                     .iter()
