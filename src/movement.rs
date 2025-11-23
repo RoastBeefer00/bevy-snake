@@ -1,5 +1,5 @@
-use crate::snake::{SnakeBody, SnakeHead, SnakeSegment};
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use crate::snake::{SnakeBody, SnakeHead};
+use bevy::prelude::*;
 
 #[derive(Resource)]
 pub struct MovementTimer {

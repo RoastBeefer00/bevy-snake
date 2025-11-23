@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::{camera::ScalingMode, prelude::*};
 
 pub struct CameraPlugin;
 
@@ -9,16 +9,16 @@ impl Plugin for CameraPlugin {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle {
-        projection: OrthographicProjection {
+    commands.spawn((
+        Camera2d,
+        Projection::Orthographic(OrthographicProjection {
             near: -1000.0,
             far: 1000.0,
             scaling_mode: ScalingMode::Fixed {
                 width: 20.0,
                 height: 20.0,
             },
-            ..default()
-        },
-        ..default()
-    });
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
 }

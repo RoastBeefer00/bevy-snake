@@ -1,5 +1,5 @@
 use crate::snake::{SnakeGrow, SnakeHead};
-use bevy::{ecs::schedule::MultiThreadedExecutor, prelude::*};
+use bevy::prelude::*;
 use rand::Rng;
 
 pub struct FoodPlugin;
@@ -7,16 +7,15 @@ pub struct FoodPlugin;
 impl Plugin for FoodPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_food);
-        app.add_systems(Update, handle_food_eaten);
-        app.add_systems(Update, eat_food);
-        app.add_event::<FoodEaten>();
+        app.add_systems(Update, (handle_food_eaten, eat_food));
+        app.add_message::<FoodEaten>();
     }
 }
 
 #[derive(Component)]
 pub struct Food;
 
-#[derive(Event)]
+#[derive(Message)]
 struct FoodEaten;
 
 fn spawn_food(mut commands: Commands, transforms: Query<&Transform>) {
@@ -34,18 +33,12 @@ fn spawn_food(mut commands: Commands, transforms: Query<&Transform>) {
     } else {
         commands.spawn((
             Food,
-            SpriteBundle {
-                transform: Transform {
-                    translation: position,
-                    ..default()
-                },
-                sprite: Sprite {
-                    color: Color::BLACK,
-                    custom_size: Some(Vec2::new(1.0, 1.0)),
-                    ..default()
-                },
+            Sprite {
+                color: Color::BLACK,
+                custom_size: Some(Vec2::new(1.0, 1.0)),
                 ..default()
             },
+            Transform::from_translation(position),
         ));
     }
 }
@@ -54,15 +47,15 @@ fn handle_food_eaten(
     mut commands: Commands,
     food: Query<(Entity, &Transform), With<Food>>,
     head: Query<&Transform, With<SnakeHead>>,
-    mut food_writer: EventWriter<FoodEaten>,
-    mut grow_writer: EventWriter<SnakeGrow>,
+    mut food_writer: MessageWriter<FoodEaten>,
+    mut grow_writer: MessageWriter<SnakeGrow>,
 ) {
     if let Some(head_transform) = head.iter().next() {
         for (entity, food_transform) in food.iter() {
             if head_transform.translation == food_transform.translation {
-                commands.entity(entity).despawn_recursive();
-                food_writer.send(FoodEaten);
-                grow_writer.send(SnakeGrow);
+                commands.entity(entity).despawn_children().despawn();
+                food_writer.write(FoodEaten);
+                grow_writer.write(SnakeGrow);
             }
         }
     }
@@ -71,7 +64,7 @@ fn handle_food_eaten(
 fn eat_food(
     commands: Commands,
     transforms: Query<&Transform>,
-    mut food_reader: EventReader<FoodEaten>,
+    mut food_reader: MessageReader<FoodEaten>,
 ) {
     if food_reader.read().next().is_some() {
         spawn_food(commands, transforms);

@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-use crate::food::Food;
 use crate::movement::Direction;
 
 pub struct SnakePlugin;
@@ -12,7 +11,7 @@ impl Plugin for SnakePlugin {
             entities: vec![],
         });
         app.add_systems(Startup, spawn_snake);
-        app.add_event::<SnakeGrow>();
+        app.add_message::<SnakeGrow>();
         app.add_systems(Update, grow_snake);
         app.add_systems(PreUpdate, handle_snake_collision);
     }
@@ -27,22 +26,21 @@ pub struct SnakeTail;
 #[derive(Bundle)]
 pub struct SnakeSegment {
     direction: Direction,
-    sprite: SpriteBundle,
+    sprite: (Sprite, Transform),
 }
 
 impl SnakeSegment {
     fn new(direction: Direction, transform: Transform) -> Self {
         SnakeSegment {
             direction: direction,
-            sprite: SpriteBundle {
-                transform: transform,
-                sprite: Sprite {
+            sprite: (
+                Sprite {
                     color: Color::BLACK,
                     custom_size: Some(Vec2::new(1.0, 1.0)),
                     ..default()
                 },
-                ..default()
-            },
+                transform,
+            ),
         }
     }
 }
@@ -53,7 +51,7 @@ pub struct SnakeBody {
     pub entities: Vec<Entity>,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct SnakeGrow;
 
 fn spawn_snake(mut commands: Commands, mut body: ResMut<SnakeBody>) {
@@ -74,7 +72,7 @@ fn grow_snake(
     mut commands: Commands,
     mut body: ResMut<SnakeBody>,
     mut segments: Query<(&Direction, &Transform), Without<SnakeHead>>,
-    mut grow_reader: EventReader<SnakeGrow>,
+    mut grow_reader: MessageReader<SnakeGrow>,
 ) {
     for _event in grow_reader.read() {
         let last_entity = body.entities.last().unwrap();
@@ -122,10 +120,10 @@ fn handle_snake_collision(
                     "Head at pos {:?} collided with tail at pos {:?}",
                     head_transform.translation, segment_transform.translation
                 );
-                commands.entity(head_entity).despawn_recursive();
+                commands.entity(head_entity).despawn_children().despawn();
                 body.entities
                     .iter()
-                    .for_each(|e| commands.entity(*e).despawn_recursive());
+                    .for_each(|e| commands.entity(*e).despawn_children().despawn());
                 self::spawn_snake(commands, body);
                 break;
             }
