@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::movement::Direction;
+use crate::{movement::Direction, state::GameState};
 
 pub struct SnakePlugin;
 
@@ -110,6 +110,7 @@ fn grow_snake(
 fn handle_snake_collision(
     mut commands: Commands,
     body: ResMut<SnakeBody>,
+    mut state: ResMut<GameState>,
     mut head: Query<(Entity, &Transform), With<SnakeHead>>,
     segments: Query<&Transform, (Without<SnakeHead>, With<SnakeTail>)>,
 ) {
@@ -125,6 +126,7 @@ fn handle_snake_collision(
                     .iter()
                     .for_each(|e| commands.entity(*e).despawn_children().despawn());
                 self::spawn_snake(commands, body);
+                *state = GameState::NewGame;
                 break;
             }
         }

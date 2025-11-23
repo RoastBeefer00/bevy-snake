@@ -1,4 +1,7 @@
-use crate::snake::{SnakeBody, SnakeHead};
+use crate::{
+    snake::{SnakeBody, SnakeHead},
+    state::GameState,
+};
 use bevy::prelude::*;
 
 #[derive(Resource)]
@@ -32,37 +35,72 @@ impl Plugin for MovementPlugin {
         app.insert_resource(MovementTimer {
             timer: Timer::from_seconds(0.1, TimerMode::Repeating),
         });
-        app.add_systems(Update, move_snake);
+        app.insert_resource(InputQueue::default());
+        app.add_systems(Update, (queue_input_system, move_snake));
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct InputQueue {
+    queue: Vec<KeyCode>,
+}
+
+fn queue_input_system(input: Res<ButtonInput<KeyCode>>, mut queue: ResMut<InputQueue>) {
+    // Add new inputs to queue
+    for key in [
+        KeyCode::ArrowUp,
+        KeyCode::ArrowDown,
+        KeyCode::ArrowLeft,
+        KeyCode::ArrowRight,
+    ] {
+        if input.just_pressed(key) {
+            if queue.queue.last() != Some(&key) {
+                queue.queue.push(key);
+            }
+        }
+    }
+
+    // Keep queue reasonable size
+    if queue.queue.len() > 3 {
+        queue.queue.remove(0);
     }
 }
 
 fn move_snake(
     mut head: Query<(&mut Direction, &mut Transform), With<SnakeHead>>,
     mut body: ResMut<SnakeBody>,
+    mut queue: ResMut<InputQueue>,
     mut segments: Query<(&mut Direction, &mut Transform), Without<SnakeHead>>,
     mut timer: ResMut<MovementTimer>,
+    state: Res<GameState>,
     input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    if let Some((mut head_direction, _)) = head.iter_mut().next() {
-        if input.pressed(KeyCode::ArrowUp) && body.head_direction != Direction::Down {
-            *head_direction = Direction::Up;
-        }
-        if input.pressed(KeyCode::ArrowDown) && body.head_direction != Direction::Up {
-            *head_direction = Direction::Down;
-        }
-        if input.pressed(KeyCode::ArrowLeft) && body.head_direction != Direction::Right {
-            *head_direction = Direction::Left;
-        }
-        if input.pressed(KeyCode::ArrowRight) && body.head_direction != Direction::Left {
-            *head_direction = Direction::Right;
-        }
-    };
+    if *state == GameState::Paused || *state == GameState::NewGame {
+        return;
+    }
     timer.timer.tick(time.delta());
     if !timer.timer.just_finished() {
         return;
     }
 
+    if let Some(key) = queue.queue.first() {
+        if let Some((mut head_direction, _)) = head.iter_mut().next() {
+            if key == &KeyCode::ArrowUp && body.head_direction != Direction::Down {
+                *head_direction = Direction::Up;
+            }
+            if key == &KeyCode::ArrowDown && body.head_direction != Direction::Up {
+                *head_direction = Direction::Down;
+            }
+            if key == &KeyCode::ArrowLeft && body.head_direction != Direction::Right {
+                *head_direction = Direction::Left;
+            }
+            if key == &KeyCode::ArrowRight && body.head_direction != Direction::Left {
+                *head_direction = Direction::Right;
+            }
+        };
+        queue.queue.remove(0);
+    }
     if let Some((head_direction, mut head_transform)) = head.iter_mut().next() {
         // Get all the old directions of every segment and place them in order
         let mut segment_directions = body

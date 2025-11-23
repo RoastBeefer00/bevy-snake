@@ -9,7 +9,7 @@ use bevy::{prelude::*, window::WindowResolution};
 use bevy_egui::{egui, EguiContexts, EguiPlugin, EguiPrimaryContextPass};
 use camera::*;
 use food::*;
-// use menus::ui_system;
+use menus::ui_system;
 use movement::*;
 use snake::*;
 use state::*;
@@ -27,12 +27,12 @@ fn main() {
             }),
             ..default()
         }))
-        // .add_plugins(EguiPlugin::default())
+        .add_plugins(EguiPlugin::default())
         .add_plugins(CameraPlugin)
-        // .add_plugins(GameStatePlugin)
+        .add_plugins(GameStatePlugin)
         .add_plugins(SnakePlugin)
         .add_plugins(MovementPlugin)
         .add_plugins(FoodPlugin)
-        // .add_systems(EguiPrimaryContextPass, ui_system)
+        .add_systems(EguiPrimaryContextPass, ui_system)
         .run();
 }
