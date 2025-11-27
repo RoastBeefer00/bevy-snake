@@ -30,7 +30,7 @@ pub struct SnakeSegment {
 }
 
 impl SnakeSegment {
-    fn new(direction: Direction, transform: Transform) -> Self {
+    pub fn new(direction: Direction, transform: Transform) -> Self {
         SnakeSegment {
             direction: direction,
             sprite: (
@@ -54,7 +54,7 @@ pub struct SnakeBody {
 #[derive(Message)]
 pub struct SnakeGrow;
 
-fn spawn_snake(mut commands: Commands, mut body: ResMut<SnakeBody>) {
+pub fn spawn_snake(mut commands: Commands, mut body: ResMut<SnakeBody>) {
     commands.spawn((
         SnakeSegment::new(Direction::Right, Transform::from_xyz(0.0, 0.0, 0.0)),
         SnakeHead,
@@ -121,12 +121,12 @@ fn handle_snake_collision(
                     "Head at pos {:?} collided with tail at pos {:?}",
                     head_transform.translation, segment_transform.translation
                 );
-                commands.entity(head_entity).despawn_children().despawn();
-                body.entities
-                    .iter()
-                    .for_each(|e| commands.entity(*e).despawn_children().despawn());
-                self::spawn_snake(commands, body);
-                *state = GameState::NewGame;
+                // commands.entity(head_entity).despawn_children().despawn();
+                // body.entities
+                //     .iter()
+                //     .for_each(|e| commands.entity(*e).despawn_children().despawn());
+                // self::spawn_snake(commands, body);
+                *state = GameState::GameOver;
                 break;
             }
         }

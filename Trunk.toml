@@ -1,0 +1,10 @@
+[build]
+release = true
+filehash = false
+
+[[build.optimization]]
+type = "wasm-opt"
+level = "z"
+
+[tools]
+wasm-bindgen = "0.2.105"

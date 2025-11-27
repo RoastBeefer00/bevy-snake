@@ -8,32 +8,35 @@
 {
   # https://devenv.sh/basics/
   env.GREET = "devenv";
-  
+
   # https://devenv.sh/packages/
-  packages = with pkgs; [
-    git
-    pkg-config
-    clang
-    lld
-    trunk
-  ] ++ lib.optionals pkgs.stdenv.isLinux [
-    # Linux-only packages
-    alsa-lib
-    vulkan-tools
-    vulkan-headers
-    vulkan-loader
-    vulkan-validation-layers
-    udev
-    # X11
-    xorg.libX11
-    xorg.libXcursor
-    xorg.libXi
-    xorg.libXrandr
-    # Wayland
-    libxkbcommon
-    wayland
-  ];
-  
+  packages =
+    with pkgs;
+    [
+      git
+      pkg-config
+      clang
+      lld
+      trunk
+    ]
+    ++ lib.optionals pkgs.stdenv.isLinux [
+      # Linux-only packages
+      alsa-lib
+      vulkan-tools
+      vulkan-headers
+      vulkan-loader
+      vulkan-validation-layers
+      udev
+      # X11
+      xorg.libX11
+      xorg.libXcursor
+      xorg.libXi
+      xorg.libXrandr
+      # Wayland
+      libxkbcommon
+      wayland
+    ];
+
   # https://devenv.sh/languages/
   languages.rust = {
     enable = true;
@@ -42,13 +45,13 @@
     ];
     channel = "stable";
   };
-  
+
   # https://devenv.sh/processes/
   # processes.cargo-watch.exec = "cargo-watch";
-  
+
   # https://devenv.sh/services/
   # services.postgres.enable = true;
-  
+
   # https://devenv.sh/scripts/
   scripts = {
     web-run.exec = ''
@@ -58,7 +61,7 @@
       #!/bin/bash
       set -e  # Exit on any error
       echo "Running trunk build..."
-      trunk build
+      trunk build --release
       echo "Looking for .wasm files in dist folder..."
       wasm_files=$(find dist -name "*.wasm" -type f)
       if [ -z "$wasm_files" ]; then
@@ -75,7 +78,7 @@
       echo "Done!"
     '';
   };
-  
+
   enterShell = lib.optionalString pkgs.stdenv.isLinux ''
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${
       pkgs.lib.makeLibraryPath [
@@ -87,21 +90,21 @@
       ]
     }"
   '';
-  
+
   # https://devenv.sh/tasks/
   # tasks = {
   #   "myproj:setup".exec = "mytool build";
   #   "devenv:enterShell".after = [ "myproj:setup" ];
   # };
-  
+
   # https://devenv.sh/tests/
   enterTest = ''
     echo "Running tests"
     git --version | grep --color=auto "${pkgs.git.version}"
   '';
-  
+
   # https://devenv.sh/git-hooks/
   # git-hooks.hooks.shellcheck.enable = true;
-  
+
   # See full reference at https://devenv.sh/reference/options/
 }

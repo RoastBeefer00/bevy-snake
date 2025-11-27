@@ -5,6 +5,7 @@ pub enum GameState {
     Playing,
     Paused,
     NewGame,
+    GameOver,
 }
 
 impl GameState {
@@ -13,7 +14,8 @@ impl GameState {
             GameState::Playing => GameState::Paused,
             GameState::Paused => GameState::Playing,
             GameState::NewGame => GameState::NewGame,
-        }
+            GameState::GameOver => GameState::GameOver,
+        };
     }
 }
 

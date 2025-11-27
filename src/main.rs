@@ -18,15 +18,27 @@ const WINDOW_WIDTH: u32 = 500;
 const WINDOW_HEIGHT: u32 = 500;
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
+    let mut app = App::new();
+    let window_plugin = if cfg!(target_arch = "wasm32") {
+        WindowPlugin {
+            primary_window: Some(Window {
+                canvas: Some("#snake-canvas".into()),
+                resolution: WindowResolution::new(800, 800),
+                ..default()
+            }),
+            ..default()
+        }
+    } else {
+        WindowPlugin {
             primary_window: Some(Window {
                 resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
                 resizable: false,
                 ..default()
             }),
             ..default()
-        }))
+        }
+    };
+    app.add_plugins(DefaultPlugins.set(window_plugin))
         .add_plugins(EguiPlugin::default())
         .add_plugins(CameraPlugin)
         .add_plugins(GameStatePlugin)

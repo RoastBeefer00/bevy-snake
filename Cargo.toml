@@ -5,6 +5,26 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.17.3", features = ["dynamic_linking"] }
-objc2 = { version = "0.5.2", features = ["relax-sign-encoding"] }
 bevy_egui = "0.38.0"
 rand = "0.8.5"
+
+[target."cfg(target_arch = \"wasm32\")".dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = { version = "0.5.2", features = ["relax-sign-encoding"] }
+
+# Enable fast compile times during development
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+# Optimize for performance in release
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

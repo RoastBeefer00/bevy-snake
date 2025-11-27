@@ -76,7 +76,7 @@ fn move_snake(
     input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    if *state == GameState::Paused || *state == GameState::NewGame {
+    if *state != GameState::Playing {
         return;
     }
     timer.timer.tick(time.delta());
